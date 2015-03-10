@@ -373,11 +373,14 @@ namespace SlowCheetah.VisualStudio
                 if (configs != null) { transformsToCreate = configs.ToList(); }
 
                 if (transformsToCreate == null) { transformsToCreate = new List<string>(); }
+                transformsToCreate.Add("template");
                 // if it is a web project we should add publish profile specific transforms as well
-                var publishProfileTransforms = this.GetPublishProfileTransforms(hierarchy, projectFullPath);
-                if (publishProfileTransforms != null) {
-                    transformsToCreate.AddRange(publishProfileTransforms);
-                }
+                
+                
+                //var publishProfileTransforms = this.GetPublishProfileTransforms(hierarchy, projectFullPath);
+                //if (publishProfileTransforms != null) {
+                //    transformsToCreate.AddRange(publishProfileTransforms);
+                //}
 
                 foreach (string config in transformsToCreate)
                 {
@@ -590,7 +593,7 @@ namespace SlowCheetah.VisualStudio
 
             
             FileInfo transformFileInfo = new FileInfo(itemFullPath);
-            bool isWebConfig = string.Compare("web.config", transformFileInfo.Name, StringComparison.OrdinalIgnoreCase) == 0;
+            bool isWebConfig = false;//string.Compare("web.config", transformFileInfo.Name, StringComparison.OrdinalIgnoreCase) == 0;
 
             if (!isWebConfig && !isTransformFile && IsExtensionSupportedForFile(itemFullPath) && IsXmlFile(itemFullPath)) {
                 itemSupportsTransforms = true;

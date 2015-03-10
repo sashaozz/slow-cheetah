@@ -1,8 +1,8 @@
 param($rootPath, $toolsPath, $package, $project)
 
-"Installing SlowCheetah to project [{0}]" -f $project.FullName | Write-Host
+"Installing AltLanDS.VSProjectPackage to project [{0}]" -f $project.FullName | Write-Host
 
-$scLabel = "SlowCheetah"
+$scLabel = "AltLanDS_VSProjectPackage"
 
 # When this package is installed we need to add a property
 # to the current project, SlowCheetahTargets, which points to the
@@ -91,7 +91,7 @@ function UpdatePackageRestoreSolutionDir (){
     $root = [Microsoft.Build.Construction.ProjectRootElement]::Open($pkgRestorePath)
     foreach($pg in $root.PropertyGroups){
         foreach($prop in $pg.Properties){
-            if([string]::Compare("SlowCheetahSolutionDir",$prop.Label,$true) -eq 0){
+            if([string]::Compare("AltLanDS_VSProjectPackageSolutionDir",$prop.Label,$true) -eq 0){
                 $solDirElement = $prop
                 break
             }
@@ -117,13 +117,13 @@ function AddImportElementIfNotExists(){
             $importStr = ""
         }
 
-        if([string]::Compare('$(SlowCheetahTargets)',$importStr.Trim(),$true) -eq 0){
+        if([string]::Compare('$(AltLanDS_VSProjectPackage)',$importStr.Trim(),$true) -eq 0){
             if(!$foundImport){
                # if it doesn't have a label then add one
                 if([string]::IsNullOrWhiteSpace($import.Label)){
                     $import.Label = $scLabel
                 }
-                $import.Condition="Exists('`$(SlowCheetahTargets)')"
+                $import.Condition="Exists('`$(AltLanDS_VSProjectPackage)')"
 
                 $foundImport = $true
             }
@@ -143,8 +143,8 @@ function AddImportElementIfNotExists(){
     if(!$foundImport){
         # the import is not in the project, add it
         # <Import Project="$(SlowCheetahTargets)" Condition="Exists('$(SlowCheetahTargets)')" Label="SlowCheetah" />
-        $importToAdd = $projectRootElement.AddImport('$(SlowCheetahTargets)');
-        $importToAdd.Condition = "Exists('`$(SlowCheetahTargets)')"
+        $importToAdd = $projectRootElement.AddImport('$(AltLanDS_VSProjectPackage)');
+        $importToAdd.Condition = "Exists('`$(AltLanDS_VSProjectPackage)')"
         $importToAdd.Label = $scLabel 
     }        
 }
@@ -179,7 +179,7 @@ CheckoutProjFileIfUnderScc
 EnsureProjectFileIsWriteable
 
 # Update the Project file to import the .targets file
-$relPathToTargets = ComputeRelativePathToTargetsFile -startPath ($projItem = Get-Item $project.FullName) -targetPath (Get-Item ("{0}\tools\SlowCheetah.Transforms.targets" -f $rootPath))
+$relPathToTargets = ComputeRelativePathToTargetsFile -startPath ($projItem = Get-Item $project.FullName) -targetPath (Get-Item ("{0}\tools\AltLanDS.VSProjectPackage.targets" -f $rootPath))
 
 $projectMSBuild = [Microsoft.Build.Construction.ProjectRootElement]::Open($projFile)
 
@@ -188,19 +188,18 @@ $propertyGroup = $projectMSBuild.AddPropertyGroup()
 $propertyGroup.Label = $scLabel
 
 $relPathToToolsFolder = ComputeRelativePathToTargetsFile -startPath ($projItem = Get-Item $project.FullName) -targetPath (Get-Item ("{0}\tools\" -f $rootPath))
-$propertyGroup.AddProperty('SlowCheetahToolsPath', ('$([System.IO.Path]::GetFullPath( $(MSBuildProjectDirectory)\{0}\))') -f $relPathToToolsFolder);
+$propertyGroup.AddProperty('AltLanDS_VSProjectPackage_ToolsPath', ('$([System.IO.Path]::GetFullPath( $(MSBuildProjectDirectory)\{0}\))') -f $relPathToToolsFolder);
 
-$propEnableNuGetImport = $propertyGroup.AddProperty('SlowCheetah_EnableImportFromNuGet', 'true');
-$propEnableNuGetImport.Condition = ' ''$(SlowCheetah_EnableImportFromNuGet)''=='''' ';
+$propEnableNuGetImport = $propertyGroup.AddProperty('AltLanDS_VSProjectPackage_EnableImportFromNuGet', 'true');
+$propEnableNuGetImport.Condition = ' ''$(AltLanDS_VSProjectPackage_EnableImportFromNuGet)''=='''' ';
 
-$importStmt = ('$([System.IO.Path]::GetFullPath( $(MSBuildProjectDirectory)\Properties\SlowCheetah\SlowCheetah.Transforms.targets ))' -f $relPathToTargets)
-$propNuGetImportPath = $propertyGroup.AddProperty('SlowCheetah_NuGetImportPath', "$importStmt");
-$propNuGetImportPath.Condition = ' ''$(SlowCheetah_NuGetImportPath)''=='''' ';
+$importStmt = ('$([System.IO.Path]::GetFullPath( $(MSBuildProjectDirectory)\Properties\AltLanDS.VSProjectPackage\AltLanDS.VSProjectPackage.targets ))' -f $relPathToTargets)
+$propNuGetImportPath = $propertyGroup.AddProperty('AltLanDS_VSProjectPackage_NuGetImportPath', "$importStmt");
+$propNuGetImportPath.Condition = ' ''$(AltLanDS_VSProjectPackage_NuGetImportPath)''=='''' ';
 
-$propImport = $propertyGroup.AddProperty('SlowCheetahTargets', '$(SlowCheetah_NuGetImportPath)');
-$propImport.Condition = ' ''$(SlowCheetah_EnableImportFromNuGet)''==''true'' and Exists(''$(SlowCheetah_NuGetImportPath)'') ';
+$propImport = $propertyGroup.AddProperty('AltLanDS_VSProjectPackageTargets', '$(AltLanDS_VSProjectPackage_NuGetImportPath)');
+$propImport.Condition = ' ''$(AltLanDS_VSProjectPackage_EnableImportFromNuGet)''==''true'' and Exists(''$(AltLanDS_VSProjectPackage_NuGetImportPath)'') ';
 
 AddImportElementIfNotExists -projectRootElement $projectMSBuild
 
 $projectMSBuild.Save()
-start http://bit.ly/slowcheetah-ps1
